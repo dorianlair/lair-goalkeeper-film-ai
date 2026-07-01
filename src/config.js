@@ -15,6 +15,20 @@ export function getConfig() {
     throw new Error('Missing GEMINI_API_KEY. Add it to your .env file.');
   }
 
+  const databaseUrl = process.env.DATABASE_URL?.trim() || '';
+  const s3Bucket = process.env.S3_BUCKET?.trim() || '';
+  const s3Region = process.env.S3_REGION?.trim() || process.env.AWS_REGION?.trim() || 'us-east-1';
+  const s3Endpoint = process.env.S3_ENDPOINT?.trim() || '';
+  const s3AccessKeyId = process.env.AWS_ACCESS_KEY_ID?.trim() || '';
+  const s3SecretAccessKey = process.env.AWS_SECRET_ACCESS_KEY?.trim() || '';
+  const s3ForcePathStyle = ['true', '1', 'yes'].includes(String(process.env.S3_FORCE_PATH_STYLE || '').toLowerCase());
+
+  const useCloudPersistence = Boolean(databaseUrl && s3Bucket);
+
+  if (!useCloudPersistence && (databaseUrl || s3Bucket)) {
+    throw new Error('To enable cloud persistence, set both DATABASE_URL and S3_BUCKET.');
+  }
+
   return {
     apiKey,
     model: process.env.GEMINI_MODEL?.trim() || 'gemini-2.5-pro',
@@ -23,5 +37,13 @@ export function getConfig() {
     uploadsDir: process.env.UPLOADS_DIR?.trim() || 'uploads',
     athletesDir: process.env.ATHLETES_DIR?.trim() || 'athletes',
     maxInlineBytes: Number(process.env.MAX_INLINE_BYTES || 20000000),
+    databaseUrl,
+    useCloudPersistence,
+    s3Bucket,
+    s3Region,
+    s3Endpoint,
+    s3AccessKeyId,
+    s3SecretAccessKey,
+    s3ForcePathStyle,
   };
 }

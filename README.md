@@ -60,10 +60,19 @@ npm run sample
 - `UPLOADS_DIR` - optional, defaults to `uploads`
 - `ATHLETES_DIR` - optional, defaults to `athletes`
 - `MAX_INLINE_BYTES` - optional, maximum file size to inline before the app switches to the Gemini Files API
+- `DATABASE_URL` - optional, Postgres connection string for cloud persistence
+- `S3_BUCKET` - optional, S3 bucket name for cloud assets (videos/reports)
+- `S3_REGION` - optional, defaults to `us-east-1`
+- `S3_ENDPOINT` - optional, for S3-compatible providers like Cloudflare R2/MinIO
+- `S3_FORCE_PATH_STYLE` - optional, set `true` for MinIO/local S3 setups
+- `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY` - optional if your runtime already provides AWS credentials
 
 Large files are automatically uploaded through the Gemini Files API when they exceed the inline threshold. Gemini file uploads support up to 2 GB per file and files stay available for about 48 hours.
 
-Athlete profiles are saved locally in the athletes directory so you can revisit past uploads, reviews, and progress over time.
+Athlete profiles are saved locally in the athletes directory by default so you can revisit past uploads, reviews, and progress over time.
+
+To enable Postgres + S3 persistence, set both `DATABASE_URL` and `S3_BUCKET`.
+When both are present, athlete/review metadata is stored in Postgres and media/report assets are stored in S3.
 
 ## Notes
 

@@ -9,15 +9,16 @@ import { analyzeVideo } from './gemini.js';
 import { buildGoalkeeperPrompt } from './prompts.js';
 import { writeReport } from './report.js';
 import {
-  createReviewDraft,
+  createReviewDraft as createLocalReviewDraft,
   getReviewAssetPath,
-  listAthletes,
-  loadAthlete,
-  resolveAthleteProfile,
+  listAthletes as listLocalAthletes,
+  loadAthlete as loadLocalAthlete,
+  resolveAthleteProfile as resolveLocalAthleteProfile,
   summarizeAnalysisText,
-  updateReview,
-  writeReviewReport,
+  updateReview as updateLocalReview,
+  writeReviewReport as writeLocalReviewReport,
 } from './athletes.js';
+import { createCloudDataLayer } from './cloudData.js';
 
 const config = getConfig();
 const app = express();
@@ -27,6 +28,79 @@ const __dirname = path.dirname(__filename);
 const publicDir = path.resolve(__dirname, '..', 'public');
 const athletesDir = path.resolve(__dirname, '..', config.athletesDir);
 const indexHtmlPath = path.join(publicDir, 'index.html');
+let cloudDataLayer = null;
+
+function usingCloudPersistence() {
+  return Boolean(cloudDataLayer);
+}
+
+async function listAthletesStore() {
+  if (usingCloudPersistence()) {
+    return cloudDataLayer.listAthletes();
+  }
+  return listLocalAthletes(athletesDir);
+}
+
+async function loadAthleteStore(athleteId) {
+  if (usingCloudPersistence()) {
+    return cloudDataLayer.loadAthlete(athleteId);
+  }
+  return loadLocalAthlete(athletesDir, athleteId);
+}
+
+async function resolveAthleteProfileStore(intake) {
+  if (usingCloudPersistence()) {
+    return cloudDataLayer.resolveAthleteProfile(intake);
+  }
+  return resolveLocalAthleteProfile(athletesDir, intake);
+}
+
+async function createReviewDraftStore(athleteId, reviewInput, uploadFile) {
+  if (usingCloudPersistence()) {
+    return cloudDataLayer.createReviewDraft(athleteId, reviewInput, uploadFile);
+  }
+  return createLocalReviewDraft(athletesDir, athleteId, reviewInput, uploadFile);
+}
+
+async function writeReviewReportStore(athleteId, reviewId, report) {
+  if (usingCloudPersistence()) {
+    return cloudDataLayer.writeReviewReport(athleteId, reviewId, report);
+  }
+  return writeLocalReviewReport(athletesDir, athleteId, reviewId, report);
+}
+
+async function updateReviewStore(athleteId, reviewId, patch) {
+  if (usingCloudPersistence()) {
+    return cloudDataLayer.updateReview(athleteId, reviewId, patch);
+  }
+  return updateLocalReview(athletesDir, athleteId, reviewId, patch);
+}
+
+async function sendAssetResponse(res, asset) {
+  if (asset.contentType) {
+    res.setHeader('content-type', asset.contentType);
+  }
+
+  const body = asset.body;
+
+  if (body?.pipe) {
+    body.pipe(res);
+    return;
+  }
+
+  if (body?.transformToByteArray) {
+    const bytes = await body.transformToByteArray();
+    res.send(Buffer.from(bytes));
+    return;
+  }
+
+  if (body instanceof Uint8Array || Buffer.isBuffer(body)) {
+    res.send(Buffer.from(body));
+    return;
+  }
+
+  throw new Error('Asset body stream type is not supported.');
+}
 
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
@@ -34,7 +108,7 @@ app.use('/public', express.static(publicDir));
 
 app.get('/api/athletes/:athleteId', async (req, res) => {
   try {
-    const athlete = await loadAthlete(athletesDir, req.params.athleteId);
+    const athlete = await loadAthleteStore(req.params.athleteId);
     res.json({ athlete });
   } catch (error) {
     res.status(404).json({ error: error.message || 'Athlete not found.' });
@@ -52,17 +126,23 @@ app.get('/athletes/:athleteId', async (_req, res) => {
 });
 
 app.get('/api/athletes', async (_req, res) => {
-  const athletes = await listAthletes(athletesDir);
+  const athletes = await listAthletesStore();
   res.json({ athletes });
 });
 
 app.get('/api/athletes/:athleteId/reviews/:reviewId/video', async (req, res) => {
   try {
-    const athlete = await loadAthlete(athletesDir, req.params.athleteId);
+    const athlete = await loadAthleteStore(req.params.athleteId);
     const review = athlete.reviews.find((item) => item.id === req.params.reviewId);
 
     if (!review) {
       return res.status(404).json({ error: 'Review not found.' });
+    }
+
+    if (usingCloudPersistence()) {
+      const asset = await cloudDataLayer.getReviewAssetObject(review, 'video');
+      await sendAssetResponse(res, asset);
+      return;
     }
 
     return res.sendFile(getReviewAssetPath(athletesDir, athlete.id, review, 'video'));
@@ -73,11 +153,17 @@ app.get('/api/athletes/:athleteId/reviews/:reviewId/video', async (req, res) => 
 
 app.get('/api/athletes/:athleteId/reviews/:reviewId/report', async (req, res) => {
   try {
-    const athlete = await loadAthlete(athletesDir, req.params.athleteId);
+    const athlete = await loadAthleteStore(req.params.athleteId);
     const review = athlete.reviews.find((item) => item.id === req.params.reviewId);
 
     if (!review) {
       return res.status(404).json({ error: 'Review not found.' });
+    }
+
+    if (usingCloudPersistence()) {
+      const asset = await cloudDataLayer.getReviewAssetObject(review, 'report');
+      await sendAssetResponse(res, asset);
+      return;
     }
 
     return res.sendFile(getReviewAssetPath(athletesDir, athlete.id, review, 'report'));
@@ -107,14 +193,13 @@ app.post('/api/analyze', upload.single('video'), async (req, res) => {
         ? [req.body.focusAreas]
         : [];
 
-    const athlete = await resolveAthleteProfile(athletesDir, {
+    const athlete = await resolveAthleteProfileStore({
       athleteId: req.body.athleteId,
       athleteName: req.body.athleteName,
       teamName: req.body.teamName,
     });
 
-    draft = await createReviewDraft(
-      athletesDir,
+    draft = await createReviewDraftStore(
       athlete.id,
       {
         athleteName: req.body.athleteName,
@@ -127,6 +212,7 @@ app.post('/api/analyze', upload.single('video'), async (req, res) => {
       {
         tempPath: path.resolve(req.file.path),
         originalFileName: req.file.originalname,
+        mimeType: req.file.mimetype,
       },
     );
 
@@ -170,12 +256,13 @@ app.post('/api/analyze', upload.single('video'), async (req, res) => {
     };
 
     const reportPath = await writeReport(config.outputDir, report);
-    const athleteReport = await writeReviewReport(athletesDir, athlete.id, draft.review.id, report);
+    const athleteReport = await writeReviewReportStore(athlete.id, draft.review.id, report);
 
-    const updatedReview = await updateReview(athletesDir, athlete.id, draft.review.id, {
+    const updatedReview = await updateReviewStore(athlete.id, draft.review.id, {
       status: 'completed',
       analyzedAt: report.analyzedAt,
       reportPath: athleteReport.reportPath,
+      reportKey: athleteReport.reportKey,
       reportFileName: athleteReport.reportFileName,
       model: config.model,
       analysisMode: config.analysisMode,
@@ -193,15 +280,9 @@ app.post('/api/analyze', upload.single('video'), async (req, res) => {
       review: updatedReview.review,
     });
   } catch (error) {
-    if (draft?.review?.id && req.body?.athleteName && req.body?.teamName) {
+    if (draft?.review?.id && draft?.profile?.id) {
       try {
-        const athlete = await resolveAthleteProfile(athletesDir, {
-          athleteId: req.body.athleteId,
-          athleteName: req.body.athleteName,
-          teamName: req.body.teamName,
-        });
-
-        await updateReview(athletesDir, athlete.id, draft.review.id, {
+        await updateReviewStore(draft.profile.id, draft.review.id, {
           status: 'failed',
           errorMessage: error.message || 'Analysis failed.',
         });
@@ -224,7 +305,14 @@ app.post('/api/analyze', upload.single('video'), async (req, res) => {
 async function start() {
   await mkdir(config.uploadsDir, { recursive: true });
   await mkdir(config.outputDir, { recursive: true });
-  await mkdir(athletesDir, { recursive: true });
+
+  if (config.useCloudPersistence) {
+    cloudDataLayer = await createCloudDataLayer(config);
+    console.log(`Cloud persistence enabled (Postgres + S3 bucket: ${config.s3Bucket}).`);
+  } else {
+    await mkdir(athletesDir, { recursive: true });
+    console.log('Local persistence enabled (filesystem).');
+  }
 
   app.listen(3000, () => {
     console.log('Local coach dashboard running at http://localhost:3000');
