@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Lair Athletics Film Review</title>
+    <link rel="stylesheet" href="/public/styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar">
+        <div class="brand-lockup">
+          <div>
+          <p class="eyebrow">Lair Athletics</p>
+          <h1>Game Film Review</h1>
+          <p class="lede">
+            A local coach dashboard for uploading goalkeeper footage, prompting Gemini,
+            and turning match clips into usable coaching feedback.
+          </p>
+          </div>
+        </div>
+
+        <div class="panel panel-soft">
+          <h2>How it works</h2>
+          <ol>
+            <li>Upload a game clip</li>
+            <li>Add context like opponent, goals, and notes</li>
+            <li>Run analysis</li>
+            <li>Review coaching feedback and next steps</li>
+          </ol>
+        </div>
+
+        <div class="panel panel-soft">
+          <h2>Best for</h2>
+          <ul>
+            <li>Goalkeeper post-game reviews</li>
+            <li>Tryout / showcase feedback</li>
+            <li>Coach-player development sessions</li>
+          </ul>
+        </div>
+      </aside>
+
+      <main class="workspace">
+        <section class="hero panel">
+          <div>
+            <p class="eyebrow">Coach mode</p>
+            <h2>Upload footage and guide the analysis</h2>
+            <p>
+              Use this form like a real review session: tell the model who the athlete is,
+              what matters in the match, and what you want the feedback to focus on.
+            </p>
+          </div>
+          <div class="status-chip">Local only · Gemini API</div>
+        </section>
+
+        <section class="grid">
+          <form id="analysis-form" class="panel form-card">
+            <h3>Review intake</h3>
+
+            <div class="field-grid">
+              <label>
+                Athlete name
+                <input name="athleteName" placeholder="e.g. Maya Johnson" />
+              </label>
+              <label>
+                Team
+                <input name="teamName" placeholder="e.g. U17 LAIR" />
+              </label>
+            </div>
+
+            <div class="field-grid">
+              <label>
+                Opponent
+                <input name="opponent" placeholder="e.g. Valley SC" />
+              </label>
+              <label>
+                Session goal
+                <input name="sessionGoal" placeholder="e.g. Prepare for showcase selection" />
+              </label>
+            </div>
+
+            <label>
+              Coach notes
+              <textarea name="coachNotes" rows="4" placeholder="What do you want Gemini to pay attention to?"></textarea>
+            </label>
+
+            <fieldset>
+              <legend>Focus areas</legend>
+              <div class="chips">
+                <label><input type="checkbox" name="focusAreas" value="decision-making" checked /> Decision-making</label>
+                <label><input type="checkbox" name="focusAreas" value="positioning" checked /> Positioning</label>
+                <label><input type="checkbox" name="focusAreas" value="communication" checked /> Communication</label>
+                <label><input type="checkbox" name="focusAreas" value="shot-stopping" checked /> Shot-stopping</label>
+                <label><input type="checkbox" name="focusAreas" value="distribution" /> Distribution</label>
+                <label><input type="checkbox" name="focusAreas" value="crosses" /> Crosses</label>
+                <label><input type="checkbox" name="focusAreas" value="breakaways" /> Breakaways</label>
+                <label><input type="checkbox" name="focusAreas" value="game management" /> Game management</label>
+              </div>
+            </fieldset>
+
+            <label class="upload-box">
+              <span>Game film</span>
+              <input id="video-input" name="video" type="file" accept="video/*" required />
+              <small>Upload a local video clip. Keep it short for the first version.</small>
+            </label>
+
+            <div class="actions">
+              <button type="submit" id="submit-btn">Analyze footage</button>
+              <p id="form-hint">Tip: short clips work best for the inline Gemini flow.</p>
+            </div>
+          </form>
+
+          <section class="panel preview-card">
+            <h3>Clip preview</h3>
+            <video id="video-preview" controls playsinline></video>
+            <p id="file-name" class="muted">No file selected yet.</p>
+          </section>
+        </section>
+
+        <section class="panel results-card">
+          <div class="results-header">
+            <div>
+              <h3>Analysis output</h3>
+              <p class="muted">This is the coach-facing result Gemini returns after reviewing the clip.</p>
+            </div>
+            <div class="status-group">
+              <div id="run-state" class="status-chip status-idle">Waiting for upload</div>
+              <p id="analysis-timer" class="muted analysis-timer">Elapsed: 00:00</p>
+            </div>
+          </div>
+
+          <div id="result-metrics" class="metrics hidden"></div>
+
+          <div id="results-empty" class="empty-state">
+            Upload a clip and run analysis to generate the first review.
+          </div>
+
+          <div id="results" class="results hidden">
+            <div class="summary-block">
+              <h4>Summary</h4>
+              <p id="summary"></p>
+            </div>
+            <div class="summary-block">
+              <h4>Overall assessment</h4>
+              <p id="overallAssessment"></p>
+            </div>
+            <div class="columns">
+              <div>
+                <h4>Strengths</h4>
+                <ul id="strengths"></ul>
+              </div>
+              <div>
+                <h4>Improvements</h4>
+                <ul id="improvements"></ul>
+              </div>
+            </div>
+            <div>
+              <h4>Key moments</h4>
+              <div id="keyMoments" class="moment-list"></div>
+            </div>
+            <div class="columns">
+              <div>
+                <h4>Training plan</h4>
+                <ul id="trainingPlan"></ul>
+              </div>
+              <div>
+                <h4>Next steps</h4>
+                <ul id="nextSteps"></ul>
+              </div>
+            </div>
+            <details>
+              <summary>Raw response</summary>
+              <pre id="rawResponse"></pre>
+            </details>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <script src="/public/app.js" type="module"></script>
+  </body>
+</html>
