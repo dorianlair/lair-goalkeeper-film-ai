@@ -1,4 +1,12 @@
 const form = document.getElementById('analysis-form');
+const athleteSelect = document.getElementById('athlete-select');
+const athleteProfileName = document.getElementById('athlete-profile-name');
+const athleteProfileMeta = document.getElementById('athlete-profile-meta');
+const athleteReviewCount = document.getElementById('athlete-review-count');
+const athleteLastReviewed = document.getElementById('athlete-last-reviewed');
+const athletePreviewVideo = document.getElementById('athlete-preview-video');
+const athletePreviewCaption = document.getElementById('athlete-preview-caption');
+const athleteHistory = document.getElementById('athlete-history');
 const videoInput = document.getElementById('video-input');
 const videoPreview = document.getElementById('video-preview');
 const fileName = document.getElementById('file-name');
@@ -18,12 +26,25 @@ const keyMoments = document.getElementById('keyMoments');
 const trainingPlan = document.getElementById('trainingPlan');
 const nextSteps = document.getElementById('nextSteps');
 
+const athleteNameInput = form.elements.athleteName;
+const teamNameInput = form.elements.teamName;
+const opponentInput = form.elements.opponent;
+const sessionGoalInput = form.elements.sessionGoal;
+
+let athletes = [];
+let activeAthleteId = '';
+let selectedVideoObjectUrl = null;
 let timerHandle = null;
 let startedAtMs = 0;
+let isAnalyzing = false;
 
 function setState(label, mode = 'idle') {
   runState.textContent = label;
   runState.className = `status-chip ${mode === 'working' ? 'status-working' : 'status-idle'}`;
+}
+
+function updateAnalyzeButtonState() {
+  submitBtn.disabled = isAnalyzing || !form.checkValidity() || !videoInput.files?.length;
 }
 
 function fillList(el, items) {
@@ -40,6 +61,42 @@ function formatElapsed(ms) {
   const minutes = String(Math.floor(totalSeconds / 60)).padStart(2, '0');
   const seconds = String(totalSeconds % 60).padStart(2, '0');
   return `${minutes}:${seconds}`;
+}
+
+function formatDate(value) {
+  if (!value) {
+    return '—';
+  }
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return '—';
+  }
+
+  return new Intl.DateTimeFormat(undefined, {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+  }).format(date);
+}
+
+function formatDateTime(value) {
+  if (!value) {
+    return '—';
+  }
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return '—';
+  }
+
+  return new Intl.DateTimeFormat(undefined, {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+  }).format(date);
 }
 
 function startTimer() {
@@ -173,21 +230,182 @@ function renderAnalysis(report, elapsedMs) {
   results.classList.remove('hidden');
 }
 
+function clearSelectedVideoObjectUrl() {
+  if (selectedVideoObjectUrl) {
+    URL.revokeObjectURL(selectedVideoObjectUrl);
+    selectedVideoObjectUrl = null;
+  }
+}
+
+function renderAthleteSelector() {
+  const current = athleteSelect.value;
+  athleteSelect.innerHTML = '<option value="">Create a new athlete profile</option>';
+
+  for (const athlete of athletes) {
+    const option = document.createElement('option');
+    option.value = athlete.id;
+    option.textContent = `${athlete.name} · ${athlete.teamName || 'No team'}`;
+    athleteSelect.appendChild(option);
+  }
+
+  if (athletes.some((athlete) => athlete.id === current)) {
+    athleteSelect.value = current;
+  }
+}
+
+function renderAthleteHistory(profile) {
+  const reviews = profile?.reviews || [];
+
+  athleteReviewCount.textContent = String(reviews.length);
+  athleteLastReviewed.textContent = formatDate(profile?.reviews?.[0]?.analyzedAt || profile?.reviews?.[0]?.uploadedAt);
+  athleteProfileName.textContent = profile ? profile.name : 'No athlete selected';
+  athleteProfileMeta.textContent = profile
+    ? [profile.teamName, profile.position].filter(Boolean).join(' · ') || 'Saved athlete profile'
+    : 'Select a saved athlete to view their profile and history.';
+
+  athleteHistory.innerHTML = '';
+
+  if (!profile) {
+    athletePreviewVideo.removeAttribute('src');
+    athletePreviewVideo.load();
+    athletePreviewCaption.textContent = 'Your athlete’s latest stored video will appear here.';
+    athleteHistory.innerHTML = '<div class="empty-compact">No athlete selected yet. Analyze a clip to create the first profile.</div>';
+    return;
+  }
+
+  const latestReview = reviews[0];
+  if (latestReview?.videoUrl) {
+    athletePreviewVideo.src = latestReview.videoUrl;
+    athletePreviewCaption.textContent = `${latestReview.sourceFile} · ${formatDateTime(latestReview.analyzedAt || latestReview.uploadedAt)}`;
+  } else {
+    athletePreviewVideo.removeAttribute('src');
+    athletePreviewVideo.load();
+    athletePreviewCaption.textContent = 'No video has been stored for this athlete yet.';
+  }
+
+  if (!reviews.length) {
+    athleteHistory.innerHTML = '<div class="empty-compact">This athlete has no saved reviews yet.</div>';
+    return;
+  }
+
+  for (const review of reviews) {
+    const card = document.createElement('div');
+    card.className = 'history-card';
+    const statusClass = review.status === 'failed' ? 'failed' : '';
+    const statusLabel = review.status || 'saved';
+
+    card.innerHTML = `
+      <div class="history-card__top">
+        <div>
+          <strong>${formatDateTime(review.analyzedAt || review.uploadedAt)}</strong>
+          <div class="muted">${review.sourceFile || 'Stored upload'}</div>
+        </div>
+        <span class="status-pill ${statusClass}">${statusLabel}</span>
+      </div>
+      <p class="muted">${review.summary || review.analysisPreview || 'No summary available yet.'}</p>
+      <div class="history-actions">
+        ${review.videoUrl ? `<a href="${review.videoUrl}" target="_blank" rel="noreferrer">Open video</a>` : ''}
+        ${review.reportUrl ? `<a href="${review.reportUrl}" target="_blank" rel="noreferrer">Open report</a>` : ''}
+      </div>
+    `;
+
+    athleteHistory.appendChild(card);
+  }
+}
+
+async function loadAthletes() {
+  const response = await fetch('/api/athletes');
+  const payload = await response.json();
+  athletes = payload.athletes || [];
+  renderAthleteSelector();
+
+  if (activeAthleteId) {
+    const athlete = athletes.find((item) => item.id === activeAthleteId);
+    if (athlete) {
+      await selectAthlete(athlete.id, { preserveFields: true });
+    }
+  }
+}
+
+async function selectAthlete(athleteId, { preserveFields = false } = {}) {
+  activeAthleteId = athleteId;
+  const athlete = athletes.find((item) => item.id === athleteId);
+
+  if (!athlete) {
+    athleteSelect.value = '';
+    renderAthleteHistory(null);
+    if (!preserveFields) {
+      athleteNameInput.value = '';
+      teamNameInput.value = '';
+    }
+    updateAnalyzeButtonState();
+    return;
+  }
+
+  athleteSelect.value = athlete.id;
+  if (!preserveFields) {
+    athleteNameInput.value = athlete.name || '';
+    teamNameInput.value = athlete.teamName || '';
+  }
+
+  const athleteResponse = await fetch(`/api/athletes/${encodeURIComponent(athlete.id)}`);
+  const athletePayload = await athleteResponse.json();
+  renderAthleteHistory(athletePayload.athlete);
+  updateAnalyzeButtonState();
+}
+
 videoInput.addEventListener('change', () => {
   const file = videoInput.files?.[0];
   if (!file) {
     fileName.textContent = 'No file selected yet.';
     videoPreview.removeAttribute('src');
     videoPreview.load();
+    clearSelectedVideoObjectUrl();
+    updateAnalyzeButtonState();
     return;
   }
 
   fileName.textContent = `${file.name} · ${(file.size / (1024 * 1024)).toFixed(1)} MB`;
-  videoPreview.src = URL.createObjectURL(file);
+  clearSelectedVideoObjectUrl();
+  selectedVideoObjectUrl = URL.createObjectURL(file);
+  videoPreview.src = selectedVideoObjectUrl;
+  updateAnalyzeButtonState();
+});
+
+athleteSelect.addEventListener('change', async () => {
+  const athleteId = athleteSelect.value;
+  activeAthleteId = athleteId;
+
+  if (!athleteId) {
+    renderAthleteHistory(null);
+    updateAnalyzeButtonState();
+    return;
+  }
+
+  const athlete = athletes.find((item) => item.id === athleteId);
+  if (athlete) {
+    athleteNameInput.value = athlete.name || '';
+    teamNameInput.value = athlete.teamName || '';
+  }
+
+  await selectAthlete(athleteId, { preserveFields: true });
+});
+
+[athleteNameInput, teamNameInput, opponentInput, sessionGoalInput].forEach((input) => {
+  input.addEventListener('input', () => updateAnalyzeButtonState());
 });
 
 form.addEventListener('submit', async (event) => {
   event.preventDefault();
+
+  if (!form.checkValidity()) {
+    form.reportValidity();
+    return;
+  }
+
+  isAnalyzing = true;
+  updateAnalyzeButtonState();
+
   const formData = new FormData(form);
   const checkedFocusAreas = [...form.querySelectorAll('input[name="focusAreas"]:checked')].map((input) => input.value);
 
@@ -196,7 +414,6 @@ form.addEventListener('submit', async (event) => {
     formData.append('focusAreas', area);
   }
 
-  submitBtn.disabled = true;
   setState('Analyzing footage…', 'working');
   startTimer();
   resultsEmpty.classList.remove('hidden');
@@ -216,6 +433,13 @@ form.addEventListener('submit', async (event) => {
     const elapsedMs = stopTimer();
     renderAnalysis(payload.report, elapsedMs);
     setState('Analysis ready', 'idle');
+
+    await loadAthletes();
+    if (payload.athlete?.id) {
+      activeAthleteId = payload.athlete.id;
+      athleteSelect.value = payload.athlete.id;
+      await selectAthlete(payload.athlete.id, { preserveFields: true });
+    }
   } catch (error) {
     stopTimer();
     setState('Analysis failed', 'idle');
@@ -224,6 +448,25 @@ form.addEventListener('submit', async (event) => {
     results.classList.add('hidden');
     resultMetrics.classList.add('hidden');
   } finally {
-    submitBtn.disabled = false;
+    isAnalyzing = false;
+    updateAnalyzeButtonState();
   }
 });
+
+async function init() {
+  setState('Waiting for upload', 'idle');
+  renderAthleteHistory(null);
+
+  try {
+    await loadAthletes();
+    if (athleteSelect.value) {
+      await selectAthlete(athleteSelect.value, { preserveFields: true });
+    }
+  } catch (error) {
+    athleteHistory.innerHTML = `<div class="empty-compact">Unable to load saved athletes yet: ${error.message || 'unknown error'}.</div>`;
+  }
+
+  updateAnalyzeButtonState();
+}
+
+init();

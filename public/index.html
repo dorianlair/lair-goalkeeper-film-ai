@@ -58,25 +58,33 @@
           <form id="analysis-form" class="panel form-card">
             <h3>Review intake</h3>
 
+            <label>
+              Athlete profile
+              <select id="athlete-select" name="athleteId">
+                <option value="">Create a new athlete profile</option>
+              </select>
+              <small class="muted">Choose a saved athlete to reuse their profile and review history.</small>
+            </label>
+
             <div class="field-grid">
               <label>
                 Athlete name
-                <input name="athleteName" placeholder="e.g. Maya Johnson" />
+                <input name="athleteName" placeholder="e.g. Maya Johnson" required />
               </label>
               <label>
                 Team
-                <input name="teamName" placeholder="e.g. U17 LAIR" />
+                <input name="teamName" placeholder="e.g. U17 LAIR" required />
               </label>
             </div>
 
             <div class="field-grid">
               <label>
                 Opponent
-                <input name="opponent" placeholder="e.g. Valley SC" />
+                <input name="opponent" placeholder="e.g. Valley SC" required />
               </label>
               <label>
                 Session goal
-                <input name="sessionGoal" placeholder="e.g. Prepare for showcase selection" />
+                <input name="sessionGoal" placeholder="e.g. Prepare for showcase selection" required />
               </label>
             </div>
 
@@ -111,11 +119,38 @@
             </div>
           </form>
 
-          <section class="panel preview-card">
-            <h3>Clip preview</h3>
-            <video id="video-preview" controls playsinline></video>
-            <p id="file-name" class="muted">No file selected yet.</p>
-          </section>
+          <div class="right-column">
+            <section class="panel preview-card">
+              <h3>Clip preview</h3>
+              <video id="video-preview" controls playsinline></video>
+              <p id="file-name" class="muted">No file selected yet.</p>
+            </section>
+
+            <section class="panel athlete-card">
+              <div class="athlete-card__header">
+                <div>
+                  <p class="eyebrow">Athlete file</p>
+                  <h3 id="athlete-profile-name">No athlete selected</h3>
+                  <p id="athlete-profile-meta" class="muted">Select a saved athlete to view their profile and history.</p>
+                </div>
+                <div class="athlete-stats">
+                  <div>
+                    <strong id="athlete-review-count">0</strong>
+                    <span>Reviews</span>
+                  </div>
+                  <div>
+                    <strong id="athlete-last-reviewed">—</strong>
+                    <span>Last review</span>
+                  </div>
+                </div>
+              </div>
+
+              <video id="athlete-preview-video" controls playsinline></video>
+              <p id="athlete-preview-caption" class="muted">Your athlete’s latest stored video will appear here.</p>
+
+              <div id="athlete-history" class="history-list"></div>
+            </section>
+          </div>
         </section>
 
         <section class="panel results-card">

@@ -58,9 +58,12 @@ npm run sample
 - `ANALYSIS_MODE` - optional, defaults to `goalkeeper_review`
 - `OUTPUT_DIR` - optional, defaults to `results`
 - `UPLOADS_DIR` - optional, defaults to `uploads`
+- `ATHLETES_DIR` - optional, defaults to `athletes`
 - `MAX_INLINE_BYTES` - optional, maximum file size to inline before the app switches to the Gemini Files API
 
 Large files are automatically uploaded through the Gemini Files API when they exceed the inline threshold. Gemini file uploads support up to 2 GB per file and files stay available for about 48 hours.
+
+Athlete profiles are saved locally in the athletes directory so you can revisit past uploads, reviews, and progress over time.
 
 ## Notes
 

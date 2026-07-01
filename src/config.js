@@ -21,6 +21,7 @@ export function getConfig() {
     analysisMode: process.env.ANALYSIS_MODE?.trim() || 'goalkeeper_review',
     outputDir: process.env.OUTPUT_DIR?.trim() || 'results',
     uploadsDir: process.env.UPLOADS_DIR?.trim() || 'uploads',
+    athletesDir: process.env.ATHLETES_DIR?.trim() || 'athletes',
     maxInlineBytes: Number(process.env.MAX_INLINE_BYTES || 20000000),
   };
 }
