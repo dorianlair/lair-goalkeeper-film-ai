@@ -60,7 +60,10 @@ npm run sample
 - `UPLOADS_DIR` - optional, defaults to `uploads`
 - `ATHLETES_DIR` - optional, defaults to `athletes`
 - `MAX_INLINE_BYTES` - optional, maximum file size to inline before the app switches to the Gemini Files API
+- `MAX_UPLOAD_BYTES` - optional, upload cap for incoming video files, defaults to `250000000` (~238 MB)
 - `DATABASE_URL` - optional, Postgres connection string for cloud persistence
+- `DATABASE_SSL_ENABLED` - optional, defaults to `true`
+- `DATABASE_SSL_REJECT_UNAUTHORIZED` - optional, defaults to `false` for local/dev RDS connectivity
 - `S3_BUCKET` - optional, S3 bucket name for cloud assets (videos/reports)
 - `S3_REGION` - optional, defaults to `us-east-1`
 - `S3_ENDPOINT` - optional, for S3-compatible providers like Cloudflare R2/MinIO
@@ -73,6 +76,15 @@ Athlete profiles are saved locally in the athletes directory by default so you c
 
 To enable Postgres + S3 persistence, set both `DATABASE_URL` and `S3_BUCKET`.
 When both are present, athlete/review metadata is stored in Postgres and media/report assets are stored in S3.
+
+If your Postgres provider returns TLS chain errors (for example `SELF_SIGNED_CERT_IN_CHAIN`) during development,
+keep `DATABASE_SSL_ENABLED=true` and set `DATABASE_SSL_REJECT_UNAUTHORIZED=false`.
+
+## Stability notes (local-first)
+
+- JSON writes for athlete profiles and reports are atomic (temp file + rename).
+- Uploaded videos are validated and size-limited before analysis begins.
+- Health endpoint is available at `GET /healthz`.
 
 ## Notes
 

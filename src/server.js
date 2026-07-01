@@ -22,13 +22,37 @@ import { createCloudDataLayer } from './cloudData.js';
 
 const config = getConfig();
 const app = express();
-const upload = multer({ dest: config.uploadsDir });
+
+const acceptedVideoMimeTypes = new Set([
+  'video/mp4',
+  'video/quicktime',
+  'video/x-msvideo',
+  'video/webm',
+  'video/x-matroska',
+]);
+
+const upload = multer({
+  dest: config.uploadsDir,
+  limits: {
+    fileSize: config.maxUploadBytes,
+    files: 1,
+  },
+  fileFilter: (_req, file, cb) => {
+    if (!acceptedVideoMimeTypes.has(file.mimetype)) {
+      cb(new Error(`Unsupported video format (${file.mimetype || 'unknown'}). Please upload MP4, MOV, AVI, WEBM, or MKV.`));
+      return;
+    }
+    cb(null, true);
+  },
+});
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const publicDir = path.resolve(__dirname, '..', 'public');
 const athletesDir = path.resolve(__dirname, '..', config.athletesDir);
 const indexHtmlPath = path.join(publicDir, 'index.html');
 let cloudDataLayer = null;
+let server = null;
+let shuttingDown = false;
 
 function usingCloudPersistence() {
   return Boolean(cloudDataLayer);
@@ -106,6 +130,14 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.use('/public', express.static(publicDir));
 
+app.get('/healthz', (_req, res) => {
+  res.json({
+    ok: true,
+    persistence: usingCloudPersistence() ? 'cloud' : 'local',
+    uptimeSeconds: Math.floor(process.uptime()),
+  });
+});
+
 app.get('/api/athletes/:athleteId', async (req, res) => {
   try {
     const athlete = await loadAthleteStore(req.params.athleteId);
@@ -172,7 +204,23 @@ app.get('/api/athletes/:athleteId/reviews/:reviewId/report', async (req, res) =>
   }
 });
 
-app.post('/api/analyze', upload.single('video'), async (req, res) => {
+const uploadVideo = (req, res, next) => {
+  upload.single('video')(req, res, (error) => {
+    if (!error) {
+      next();
+      return;
+    }
+
+    if (error instanceof multer.MulterError && error.code === 'LIMIT_FILE_SIZE') {
+      res.status(400).json({ error: `Video is too large. Max upload size is ${Math.round(config.maxUploadBytes / (1024 * 1024))} MB.` });
+      return;
+    }
+
+    res.status(400).json({ error: error.message || 'Invalid upload.' });
+  });
+};
+
+app.post('/api/analyze', uploadVideo, async (req, res) => {
   let draft;
 
   try {
@@ -314,9 +362,46 @@ async function start() {
     console.log('Local persistence enabled (filesystem).');
   }
 
-  app.listen(3000, () => {
+  server = app.listen(3000, () => {
     console.log('Local coach dashboard running at http://localhost:3000');
   });
 }
+
+async function shutdown(signal) {
+  if (shuttingDown) {
+    return;
+  }
+
+  shuttingDown = true;
+  console.log(`Received ${signal}. Shutting down gracefully...`);
+
+  if (server) {
+    await new Promise((resolve) => {
+      server.close(() => resolve());
+    });
+  }
+
+  if (cloudDataLayer?.close) {
+    await cloudDataLayer.close().catch((error) => {
+      console.error('Failed to close cloud data layer cleanly:', error);
+    });
+  }
+
+  process.exit(0);
+}
+
+process.on('SIGINT', () => {
+  shutdown('SIGINT').catch((error) => {
+    console.error('Shutdown error:', error);
+    process.exit(1);
+  });
+});
+
+process.on('SIGTERM', () => {
+  shutdown('SIGTERM').catch((error) => {
+    console.error('Shutdown error:', error);
+    process.exit(1);
+  });
+});
 
 start();

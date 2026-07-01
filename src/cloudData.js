@@ -123,7 +123,25 @@ function mapAthleteRow(row) {
 }
 
 export async function createCloudDataLayer(config) {
-  const pool = new Pool({ connectionString: config.databaseUrl });
+  let normalizedDatabaseUrl = config.databaseUrl;
+  try {
+    const parsed = new URL(config.databaseUrl);
+    parsed.searchParams.delete('sslmode');
+    parsed.searchParams.delete('uselibpqcompat');
+    parsed.searchParams.delete('sslcert');
+    parsed.searchParams.delete('sslkey');
+    parsed.searchParams.delete('sslrootcert');
+    normalizedDatabaseUrl = parsed.toString();
+  } catch {
+    normalizedDatabaseUrl = config.databaseUrl;
+  }
+
+  const pool = new Pool({
+    connectionString: normalizedDatabaseUrl,
+    ssl: config.databaseSslEnabled
+      ? { rejectUnauthorized: config.databaseSslRejectUnauthorized }
+      : undefined,
+  });
   const s3 = new S3Client({
     region: config.s3Region,
     endpoint: config.s3Endpoint || undefined,

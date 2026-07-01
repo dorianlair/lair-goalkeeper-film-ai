@@ -1,6 +1,9 @@
-import { copyFile, mkdir, readFile, readdir, writeFile } from 'node:fs/promises';
+import { copyFile, mkdir, readFile, readdir, rename, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { randomUUID } from 'node:crypto';
+
+const PROFILE_SCHEMA_VERSION = 1;
+const REPORT_SCHEMA_VERSION = 1;
 
 function normalizeText(value) {
   return String(value || '').trim();
@@ -45,7 +48,9 @@ async function readJson(filePath) {
 
 async function writeJson(filePath, value) {
   await mkdir(path.dirname(filePath), { recursive: true });
-  await writeFile(filePath, `${JSON.stringify(value, null, 2)}\n`, 'utf8');
+  const tmpPath = `${filePath}.tmp-${process.pid}-${Date.now()}`;
+  await writeFile(tmpPath, `${JSON.stringify(value, null, 2)}\n`, 'utf8');
+  await rename(tmpPath, filePath);
 }
 
 async function ensureAthleteStorage(rootDir, athleteId) {
@@ -104,12 +109,14 @@ export async function listAthletes(rootDir) {
 
 export async function loadAthlete(rootDir, athleteId) {
   const profile = await readJson(profilePath(rootDir, athleteId));
+  profile.schemaVersion = Number(profile.schemaVersion || PROFILE_SCHEMA_VERSION);
   profile.reviews = Array.isArray(profile.reviews) ? profile.reviews : [];
   return profile;
 }
 
 export async function saveAthlete(rootDir, profile) {
   const nextProfile = {
+    schemaVersion: Number(profile.schemaVersion || PROFILE_SCHEMA_VERSION),
     ...profile,
     updatedAt: new Date().toISOString(),
     reviews: Array.isArray(profile.reviews) ? profile.reviews : [],
@@ -163,6 +170,7 @@ export async function resolveAthleteProfile(rootDir, intake) {
 
   const now = new Date().toISOString();
   const profile = {
+    schemaVersion: PROFILE_SCHEMA_VERSION,
     id: athleteIdFromName(athleteName, teamName),
     slug: slugify([athleteName, teamName].filter(Boolean).join(' ')),
     name: athleteName,
@@ -244,7 +252,11 @@ export async function writeReviewReport(rootDir, athleteId, reviewId, report) {
   await ensureAthleteStorage(rootDir, athleteId);
   const reportFileName = `${reviewId}.json`;
   const reportPath = path.join(reportsDir(rootDir, athleteId), reportFileName);
-  await writeJson(reportPath, report);
+  const payload = {
+    schemaVersion: REPORT_SCHEMA_VERSION,
+    ...report,
+  };
+  await writeJson(reportPath, payload);
   return { reportPath, reportFileName };
 }
 

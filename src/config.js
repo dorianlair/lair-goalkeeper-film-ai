@@ -16,6 +16,8 @@ export function getConfig() {
   }
 
   const databaseUrl = process.env.DATABASE_URL?.trim() || '';
+  const databaseSslEnabled = ['true', '1', 'yes'].includes(String(process.env.DATABASE_SSL_ENABLED || 'true').toLowerCase());
+  const databaseSslRejectUnauthorized = ['true', '1', 'yes'].includes(String(process.env.DATABASE_SSL_REJECT_UNAUTHORIZED || 'false').toLowerCase());
   const s3Bucket = process.env.S3_BUCKET?.trim() || '';
   const s3Region = process.env.S3_REGION?.trim() || process.env.AWS_REGION?.trim() || 'us-east-1';
   const s3Endpoint = process.env.S3_ENDPOINT?.trim() || '';
@@ -37,7 +39,10 @@ export function getConfig() {
     uploadsDir: process.env.UPLOADS_DIR?.trim() || 'uploads',
     athletesDir: process.env.ATHLETES_DIR?.trim() || 'athletes',
     maxInlineBytes: Number(process.env.MAX_INLINE_BYTES || 20000000),
+    maxUploadBytes: Number(process.env.MAX_UPLOAD_BYTES || 250000000),
     databaseUrl,
+    databaseSslEnabled,
+    databaseSslRejectUnauthorized,
     useCloudPersistence,
     s3Bucket,
     s3Region,
