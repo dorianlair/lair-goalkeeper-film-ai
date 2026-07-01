@@ -61,3 +61,9 @@ npm run sample
 - `MAX_INLINE_BYTES` - optional, maximum file size to inline before the app switches to the Gemini Files API
 
 Large files are automatically uploaded through the Gemini Files API when they exceed the inline threshold. Gemini file uploads support up to 2 GB per file and files stay available for about 48 hours.
+
+## Notes
+
+This starter is intentionally separate from the Shopify agent repository and is designed around soccer game-film review rather than store operations.
+
+The browser UI is intentionally coach-friendly: it behaves like a review intake form and analysis workspace, not a generic file uploader.

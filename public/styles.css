@@ -335,6 +335,22 @@ details {
   gap: 10px;
 }
 
+.brand-wordmark,
+.hero-wordmark {
+  display: block;
+  max-width: 110px;
+  width: 100%;
+  height: auto;
+  margin-bottom: 6px;
+}
+
+.brand-wordmark--compact {
+  max-width: 112px;
+  background: transparent;
+  box-shadow: none;
+  margin-top: 2px;
+}
+
 .metrics {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
