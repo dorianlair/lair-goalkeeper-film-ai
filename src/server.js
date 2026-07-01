@@ -46,6 +46,11 @@ app.get('/', async (_req, res) => {
   res.type('html').send(html);
 });
 
+app.get('/athletes/:athleteId', async (_req, res) => {
+  const html = await readFile(indexHtmlPath, 'utf8');
+  res.type('html').send(html);
+});
+
 app.get('/api/athletes', async (_req, res) => {
   const athletes = await listAthletes(athletesDir);
   res.json({ athletes });

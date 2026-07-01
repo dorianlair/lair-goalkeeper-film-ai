@@ -1,0 +1,41 @@
+{
+  "id": "dorian-lair-lair-athletics-6dae0ae5",
+  "slug": "dorian-lair-lair-athletics",
+  "name": "Dorian Lair",
+  "teamName": "Lair Athletics",
+  "position": "",
+  "notes": "",
+  "createdAt": "2026-07-01T05:07:44.384Z",
+  "updatedAt": "2026-07-01T05:09:01.281Z",
+  "reviews": [
+    {
+      "id": "6af4e828-9683-49e9-9749-bbee83c79621",
+      "status": "completed",
+      "uploadedAt": "2026-07-01T05:07:44.929Z",
+      "analyzedAt": "2026-07-01T05:09:01.277Z",
+      "athleteName": "Dorian Lair",
+      "teamName": "Lair Athletics",
+      "opponent": "N/A",
+      "sessionGoal": "N/A",
+      "coachNotes": "Test",
+      "focusAreas": [
+        "decision-making",
+        "positioning",
+        "communication",
+        "shot-stopping"
+      ],
+      "sourceFile": "DSCF5103.mp4",
+      "storedFileName": "6af4e828-9683-49e9-9749-bbee83c79621.mp4",
+      "videoUrl": "/api/athletes/dorian-lair-lair-athletics-6dae0ae5/reviews/6af4e828-9683-49e9-9749-bbee83c79621/video",
+      "reportUrl": "/api/athletes/dorian-lair-lair-athletics-6dae0ae5/reviews/6af4e828-9683-49e9-9749-bbee83c79621/report",
+      "reportFileName": "6af4e828-9683-49e9-9749-bbee83c79621.json",
+      "reportPath": "/Users/dorianlair/Projects/lair-goalkeeper-film-ai/athletes/dorian-lair-lair-athletics-6dae0ae5/reports/6af4e828-9683-49e9-9749-bbee83c79621.json",
+      "model": "gemini-2.5-pro",
+      "analysisMode": "goalkeeper_review",
+      "summary": "This session analysis focuses on Dorian's performance in a seated, close-range, reaction-based shot-stopping drill. The primary evaluation is on diving technique, hand-path efficiency, and handling.",
+      "overallAssessment": "Dorian displays a strong foundation in his diving technique and reaction speed. He is explosive from a static position and generally handles the ball cleanly. The main opportunity for growth lies in refining the efficiency of his hand movements to the ball, ensuring the quickest and most direct path on every save. This will translate to faster saves in more dynamic situations.",
+      "analysisPreview": "```json\n{\n  \"summary\": \"This session analysis focuses on Dorian's performance in a seated, close-range, reaction-based shot-stopping drill. The primary evaluation is on diving technique, hand-path efficiency, and handling.\",\n  \"overallAssessment\": \"Dorian disp",
+      "errorMessage": ""
+    }
+  ]
+}

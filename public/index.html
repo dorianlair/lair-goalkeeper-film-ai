@@ -167,6 +167,15 @@
 
           <div id="result-metrics" class="metrics hidden"></div>
 
+          <div id="analysis-loader" class="analysis-loader hidden" aria-live="polite">
+            <div class="analysis-loader__glove" aria-hidden="true">🧤</div>
+            <div class="analysis-loader__content">
+              <p id="analysis-loader-title" class="analysis-loader__title">Gloves on. Breaking down your film.</p>
+              <p id="analysis-loader-message" class="analysis-loader__message">Warming up the hands and reading the match context…</p>
+              <p id="analysis-loader-eta" class="analysis-loader__eta">Estimated time: 00:00</p>
+            </div>
+          </div>
+
           <div id="results-empty" class="empty-state">
             Upload a clip and run analysis to generate the first review.
           </div>
@@ -209,6 +218,88 @@
               <pre id="rawResponse"></pre>
             </details>
           </div>
+        </section>
+
+        <section class="panel dashboard-card" id="athlete-dashboard">
+          <div class="dashboard-header">
+            <div>
+              <p class="eyebrow">Athlete dashboard</p>
+              <h3 id="dashboard-athlete-name">Select an athlete to open their review dashboard</h3>
+              <p id="dashboard-athlete-subtitle" class="muted">
+                Interactive player summaries, shot distribution, skill comparison, goal locations, and team-performance style visuals—built for fast coaching decisions.
+              </p>
+            </div>
+            <div id="dashboard-last-sync" class="status-chip status-idle">No athlete selected</div>
+          </div>
+
+          <div id="dashboard-kpis" class="dashboard-kpis">
+            <article class="dashboard-kpi">
+              <p class="label">Total analyses</p>
+              <p class="value">0</p>
+            </article>
+          </div>
+
+          <div class="dashboard-grid">
+            <article class="dashboard-panel">
+              <h4>Performance momentum</h4>
+              <p class="muted">Recent analysis trend from completed reviews.</p>
+              <div id="dashboard-trend" class="trend-bars"></div>
+            </article>
+
+            <article class="dashboard-panel">
+              <h4>Focus-area heat</h4>
+              <p class="muted">What this athlete is training most often.</p>
+              <div id="dashboard-focus" class="focus-heat"></div>
+            </article>
+
+            <article class="dashboard-panel">
+              <h4>Goal location map</h4>
+              <p class="muted">Infographic of key moments mapped to goal zones.</p>
+              <div id="dashboard-goal-map" class="goal-map"></div>
+            </article>
+
+            <article class="dashboard-panel">
+              <h4>Past analyses</h4>
+              <p class="muted">Linked summaries for quick comparison and review.</p>
+              <div id="dashboard-past" class="past-analysis-list"></div>
+            </article>
+          </div>
+
+          <article class="dashboard-panel infographic-panel">
+            <div class="infographic-head">
+              <div>
+                <h4>Interactive performance infographic</h4>
+                <p class="muted">Compare athlete profile vs benchmark, explore attributes, and inspect shot distribution.</p>
+              </div>
+              <div class="infographic-controls" role="tablist" aria-label="Infographic timeframe">
+                <button type="button" class="infographic-tab active" data-infographic-mode="recent">Recent form</button>
+                <button type="button" class="infographic-tab" data-infographic-mode="overall">Overall profile</button>
+              </div>
+            </div>
+
+            <div class="infographic-layout">
+              <div class="radar-wrap">
+                <svg id="dashboard-radar" viewBox="0 0 420 360" role="img" aria-label="Athlete radar chart"></svg>
+                <div id="dashboard-radar-tooltip" class="radar-tooltip hidden"></div>
+                <div class="radar-legend">
+                  <span><i class="swatch swatch-athlete"></i><span id="radar-athlete-label">Athlete</span></span>
+                  <span><i class="swatch swatch-benchmark"></i>Benchmark GK</span>
+                </div>
+              </div>
+
+              <div>
+                <div id="dashboard-attributes" class="attribute-stack"></div>
+                <div class="shot-distribution">
+                  <h5>Shot distribution</h5>
+                  <div id="dashboard-shot-grid" class="shot-grid"></div>
+                </div>
+              </div>
+            </div>
+          </article>
+
+          <blockquote class="dashboard-note">
+            “The document presents Infootmation, an interactive soccer data visualization tool for fans, featuring player summaries, shot distribution, skill comparison, goal locations, and team performance.”
+          </blockquote>
         </section>
       </main>
     </div>
