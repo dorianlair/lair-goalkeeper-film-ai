@@ -1,0 +1,79 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1800" height="1000" viewBox="0 0 1800 1000">
+  <defs>
+    <marker id="arrow" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L12,6 L0,12 z" fill="#f0bf65"/>
+    </marker>
+  </defs>
+
+  <rect width="1800" height="1000" fill="#07140f"/>
+  <rect x="28" y="28" width="1744" height="944" rx="28" fill="#123524" stroke="#f0bf65" stroke-width="2"/>
+
+  <text x="70" y="95" fill="#ffffff" font-family="Inter, Arial, sans-serif" font-size="34" font-weight="800">Lair Athletics · Goalkeeper Film AI Flow</text>
+  <text x="70" y="128" fill="#f0bf65" font-family="Inter, Arial, sans-serif" font-size="18">End-to-end workflow from upload to coach-ready feedback</text>
+
+  <rect x="70" y="170" width="250" height="160" rx="22" fill="#183b2a" stroke="#448967" stroke-width="2"/>
+  <text x="95" y="215" fill="#ffffff" font-family="Inter, Arial, sans-serif" font-size="24" font-weight="700">Coach UI</text>
+  <text x="95" y="248" fill="#f0bf65" font-family="Inter, Arial, sans-serif" font-size="16">Browser dashboard</text>
+  <text x="95" y="276" fill="#dce8e0" font-family="Inter, Arial, sans-serif" font-size="15">Upload video</text>
+  <text x="95" y="300" fill="#dce8e0" font-family="Inter, Arial, sans-serif" font-size="15">Review reports</text>
+
+  <rect x="370" y="170" width="270" height="160" rx="22" fill="#183b2a" stroke="#f0bf65" stroke-width="2"/>
+  <text x="395" y="214" fill="#ffffff" font-family="Inter, Arial, sans-serif" font-size="24" font-weight="700">Express Server</text>
+  <text x="395" y="247" fill="#f0bf65" font-family="Inter, Arial, sans-serif" font-size="16">Routes + upload handling</text>
+  <text x="395" y="274" fill="#dce8e0" font-family="Inter, Arial, sans-serif" font-size="15">server.js</text>
+  <text x="395" y="298" fill="#dce8e0" font-family="Inter, Arial, sans-serif" font-size="15">/api/athletes · /healthz</text>
+
+  <rect x="690" y="170" width="280" height="160" rx="22" fill="#183b2a" stroke="#448967" stroke-width="2"/>
+  <text x="715" y="214" fill="#ffffff" font-family="Inter, Arial, sans-serif" font-size="24" font-weight="700">Review Orchestration</text>
+  <text x="715" y="247" fill="#f0bf65" font-family="Inter, Arial, sans-serif" font-size="16">Draft review + athlete lookup</text>
+  <text x="715" y="274" fill="#dce8e0" font-family="Inter, Arial, sans-serif" font-size="15">Validate upload</text>
+  <text x="715" y="298" fill="#dce8e0" font-family="Inter, Arial, sans-serif" font-size="15">Create review record</text>
+
+  <rect x="1020" y="170" width="280" height="160" rx="22" fill="#183b2a" stroke="#f0bf65" stroke-width="2"/>
+  <text x="1045" y="214" fill="#ffffff" font-family="Inter, Arial, sans-serif" font-size="24" font-weight="700">AI Analysis</text>
+  <text x="1045" y="247" fill="#f0bf65" font-family="Inter, Arial, sans-serif" font-size="16">Gemini + prompt engine</text>
+  <text x="1045" y="274" fill="#dce8e0" font-family="Inter, Arial, sans-serif" font-size="15">Structured coaching insights</text>
+  <text x="1045" y="298" fill="#dce8e0" font-family="Inter, Arial, sans-serif" font-size="15">Timestamps + confidence</text>
+
+  <rect x="1350" y="170" width="300" height="160" rx="22" fill="#183b2a" stroke="#448967" stroke-width="2"/>
+  <text x="1375" y="214" fill="#ffffff" font-family="Inter, Arial, sans-serif" font-size="24" font-weight="700">Report Output</text>
+  <text x="1375" y="247" fill="#f0bf65" font-family="Inter, Arial, sans-serif" font-size="16">Coach-ready report</text>
+  <text x="1375" y="274" fill="#dce8e0" font-family="Inter, Arial, sans-serif" font-size="15">Persist review + media</text>
+  <text x="1375" y="298" fill="#dce8e0" font-family="Inter, Arial, sans-serif" font-size="15">Show in dashboard</text>
+
+  <path d="M320 250 L370 250" stroke="#f0bf65" stroke-width="3" stroke-linecap="round" fill="none" marker-end="url(#arrow)"/>
+  <path d="M640 250 L690 250" stroke="#f0bf65" stroke-width="3" stroke-linecap="round" fill="none" marker-end="url(#arrow)"/>
+  <path d="M970 250 L1020 250" stroke="#f0bf65" stroke-width="3" stroke-linecap="round" fill="none" marker-end="url(#arrow)"/>
+  <path d="M1300 250 L1350 250" stroke="#f0bf65" stroke-width="3" stroke-linecap="round" fill="none" marker-end="url(#arrow)"/>
+
+  <rect x="90" y="390" width="640" height="260" rx="22" fill="#0f2d20" stroke="#448967" stroke-width="2"/>
+  <text x="120" y="435" fill="#ffffff" font-family="Inter, Arial, sans-serif" font-size="22" font-weight="700">Core Flow</text>
+  <text x="120" y="472" fill="#dce8e0" font-family="Inter, Arial, sans-serif" font-size="16">1. Coach uploads a goalkeeper video from the dashboard</text>
+  <text x="120" y="500" fill="#dce8e0" font-family="Inter, Arial, sans-serif" font-size="16">2. The server validates the file and creates a review draft</text>
+  <text x="120" y="528" fill="#dce8e0" font-family="Inter, Arial, sans-serif" font-size="16">3. Athlete and report context are resolved or created</text>
+  <text x="120" y="556" fill="#dce8e0" font-family="Inter, Arial, sans-serif" font-size="16">4. Gemini analyzes the clip and returns structured feedback</text>
+  <text x="120" y="584" fill="#dce8e0" font-family="Inter, Arial, sans-serif" font-size="16">5. The report is saved and shown back to the coach</text>
+
+  <rect x="780" y="390" width="930" height="260" rx="22" fill="#0f2d20" stroke="#f0bf65" stroke-width="2"/>
+  <text x="810" y="435" fill="#ffffff" font-family="Inter, Arial, sans-serif" font-size="22" font-weight="700">Storage Options</text>
+
+  <rect x="810" y="470" width="220" height="140" rx="18" fill="#183b2a" stroke="#448967" stroke-width="2"/>
+  <text x="838" y="512" fill="#ffffff" font-family="Inter, Arial, sans-serif" font-size="20" font-weight="700">Local Files</text>
+  <text x="838" y="542" fill="#dce8e0" font-family="Inter, Arial, sans-serif" font-size="15">athletes/</text>
+  <text x="838" y="564" fill="#dce8e0" font-family="Inter, Arial, sans-serif" font-size="15">uploads/</text>
+
+  <rect x="1060" y="470" width="240" height="140" rx="18" fill="#183b2a" stroke="#f0bf65" stroke-width="2"/>
+  <text x="1090" y="512" fill="#ffffff" font-family="Inter, Arial, sans-serif" font-size="20" font-weight="700">Postgres</text>
+  <text x="1090" y="542" fill="#dce8e0" font-family="Inter, Arial, sans-serif" font-size="15">athletes · reviews</text>
+  <text x="1090" y="564" fill="#dce8e0" font-family="Inter, Arial, sans-serif" font-size="15">metadata + status</text>
+
+  <rect x="1340" y="470" width="330" height="140" rx="18" fill="#183b2a" stroke="#448967" stroke-width="2"/>
+  <text x="1370" y="512" fill="#ffffff" font-family="Inter, Arial, sans-serif" font-size="20" font-weight="700">S3 / Object Storage</text>
+  <text x="1370" y="542" fill="#dce8e0" font-family="Inter, Arial, sans-serif" font-size="15">videos · reports · assets</text>
+  <text x="1370" y="564" fill="#dce8e0" font-family="Inter, Arial, sans-serif" font-size="15">Optional cloud persistence</text>
+
+  <rect x="90" y="700" width="1620" height="220" rx="20" fill="#183b2a" stroke="#f0bf65" stroke-width="2"/>
+  <text x="120" y="744" fill="#ffffff" font-family="Inter, Arial, sans-serif" font-size="20" font-weight="700">Key modules</text>
+  <text x="120" y="780" fill="#dce8e0" font-family="Inter, Arial, sans-serif" font-size="16">config.js · prompts.js · gemini.js · report.js · athletes.js · cloudData.js · server.js</text>
+  <text x="120" y="818" fill="#f0bf65" font-family="Inter, Arial, sans-serif" font-size="16">This diagram reflects the local-first architecture with optional Postgres + S3 support.</text>
+</svg>

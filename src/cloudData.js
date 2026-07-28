@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import path from 'node:path';
 import { readFile } from 'node:fs/promises';
+import { buildReviewUpdateAssignments } from './reviewUpdate.js';
 import { Pool } from 'pg';
 import { S3Client, PutObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3';
 
@@ -460,37 +461,7 @@ export async function createCloudDataLayer(config) {
   }
 
   async function updateReview(athleteId, reviewId, patch) {
-    const fieldMap = {
-      status: 'status',
-      analyzedAt: 'analyzed_at',
-      model: 'model',
-      analysisMode: 'analysis_mode',
-      summary: 'summary',
-      overallAssessment: 'overall_assessment',
-      analysisPreview: 'analysis_preview',
-      errorMessage: 'error_message',
-      reportKey: 'report_key',
-      reportPath: 'report_key',
-      focusAreas: 'focus_areas',
-    };
-
-    const assignments = [];
-    const values = [];
-
-    for (const [key, column] of Object.entries(fieldMap)) {
-      if (!(key in patch)) {
-        continue;
-      }
-
-      let value = patch[key];
-      if (key === 'focusAreas') {
-        value = JSON.stringify(Array.isArray(value) ? value : []);
-        assignments.push(`${column} = $${values.length + 1}::jsonb`);
-      } else {
-        assignments.push(`${column} = $${values.length + 1}`);
-      }
-      values.push(value);
-    }
+    const { assignments, values } = buildReviewUpdateAssignments(patch);
 
     if (!assignments.length) {
       throw new Error('No review updates were provided.');
