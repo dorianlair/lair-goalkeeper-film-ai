@@ -7,6 +7,7 @@ import { fileURLToPath } from 'node:url';
 import { getConfig } from './config.js';
 import { analyzeVideo } from './gemini.js';
 import { buildGoalkeeperPrompt } from './prompts.js';
+import { buildParentReportHtml, buildParentReportModel } from './parentReport.js';
 import { writeReport } from './report.js';
 import {
   createReviewDraft as createLocalReviewDraft,
@@ -53,6 +54,50 @@ const indexHtmlPath = path.join(publicDir, 'index.html');
 let cloudDataLayer = null;
 let server = null;
 let shuttingDown = false;
+const analyzeRequestBuckets = new Map();
+
+function getClientAddress(req) {
+  const forwarded = req.headers['x-forwarded-for'];
+  if (typeof forwarded === 'string' && forwarded.trim()) {
+    return forwarded.split(',')[0].trim();
+  }
+  return req.ip || req.socket?.remoteAddress || 'unknown';
+}
+
+function analyzeRateLimit(req, res, next) {
+  const now = Date.now();
+  const client = getClientAddress(req);
+  const windowMs = config.analyzeRateLimitWindowMs;
+  const maxRequests = config.analyzeRateLimitMaxRequests;
+  const cutoff = now - windowMs;
+
+  for (const [key, bucket] of analyzeRequestBuckets.entries()) {
+    if (bucket.lastSeenAt < cutoff) {
+      analyzeRequestBuckets.delete(key);
+    }
+  }
+
+  const bucket = analyzeRequestBuckets.get(client) || { count: 0, windowStartedAt: now, lastSeenAt: now };
+
+  if (now - bucket.windowStartedAt >= windowMs) {
+    bucket.count = 0;
+    bucket.windowStartedAt = now;
+  }
+
+  bucket.count += 1;
+  bucket.lastSeenAt = now;
+  analyzeRequestBuckets.set(client, bucket);
+
+  if (bucket.count > maxRequests) {
+    const retryAfterSeconds = Math.max(1, Math.ceil((bucket.windowStartedAt + windowMs - now) / 1000));
+    res.setHeader('retry-after', String(retryAfterSeconds));
+    return res.status(429).json({
+      error: `Rate limit exceeded. Try again in about ${retryAfterSeconds} seconds.`,
+    });
+  }
+
+  return next();
+}
 
 function usingCloudPersistence() {
   return Boolean(cloudDataLayer);
@@ -126,6 +171,50 @@ async function sendAssetResponse(res, asset) {
   throw new Error('Asset body stream type is not supported.');
 }
 
+async function readAssetBodyToText(body) {
+  if (typeof body === 'string') {
+    return body;
+  }
+
+  if (body?.transformToString) {
+    return body.transformToString('utf8');
+  }
+
+  if (body?.pipe) {
+    const chunks = [];
+    for await (const chunk of body) {
+      chunks.push(Buffer.from(chunk));
+    }
+    return Buffer.concat(chunks).toString('utf8');
+  }
+
+  if (body?.[Symbol.asyncIterator]) {
+    const chunks = [];
+    for await (const chunk of body) {
+      chunks.push(Buffer.from(chunk));
+    }
+    return Buffer.concat(chunks).toString('utf8');
+  }
+
+  if (body instanceof Uint8Array || Buffer.isBuffer(body)) {
+    return Buffer.from(body).toString('utf8');
+  }
+
+  throw new Error('Unsupported report body type.');
+}
+
+async function loadReportPayload(athlete, review) {
+  if (usingCloudPersistence()) {
+    const asset = await cloudDataLayer.getReviewAssetObject(review, 'report');
+    const text = await readAssetBodyToText(asset.body);
+    return JSON.parse(text);
+  }
+
+  const reportPath = getReviewAssetPath(athletesDir, athlete.id, review, 'report');
+  const text = await readFile(reportPath, 'utf8');
+  return JSON.parse(text);
+}
+
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.use('/public', express.static(publicDir));
@@ -192,13 +281,16 @@ app.get('/api/athletes/:athleteId/reviews/:reviewId/report', async (req, res) =>
       return res.status(404).json({ error: 'Review not found.' });
     }
 
-    if (usingCloudPersistence()) {
-      const asset = await cloudDataLayer.getReviewAssetObject(review, 'report');
-      await sendAssetResponse(res, asset);
-      return;
+    const report = await loadReportPayload(athlete, review);
+
+    if (String(req.query.format || '').toLowerCase() === 'json') {
+      return res.json(report);
     }
 
-    return res.sendFile(getReviewAssetPath(athletesDir, athlete.id, review, 'report'));
+    const html = buildParentReportHtml(buildParentReportModel(report));
+
+    res.type('html');
+    return res.send(html);
   } catch (error) {
     return res.status(404).json({ error: error.message || 'Review report not found.' });
   }
@@ -220,7 +312,7 @@ const uploadVideo = (req, res, next) => {
   });
 };
 
-app.post('/api/analyze', uploadVideo, async (req, res) => {
+app.post('/api/analyze', analyzeRateLimit, uploadVideo, async (req, res) => {
   let draft;
 
   try {

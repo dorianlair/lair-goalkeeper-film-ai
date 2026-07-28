@@ -554,6 +554,32 @@ details {
   margin-bottom: 0;
 }
 
+.results-actions {
+  display: grid;
+  justify-items: end;
+  gap: 8px;
+}
+
+.secondary-action {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text);
+  border: 1px solid rgba(240, 191, 101, 0.26);
+  box-shadow: none;
+}
+
+.secondary-action:disabled {
+  opacity: 0.5;
+}
+
+.results-note {
+  margin: 0;
+  padding: 10px 12px;
+  border-left: 3px solid rgba(68, 137, 103, 0.6);
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: var(--radius);
+  font-size: 0.82rem;
+}
+
 .dashboard-card {
   padding: 14px;
   display: grid;

@@ -10,6 +10,8 @@ Standalone Gemini API project for reviewing goalkeeper match footage and generat
 - Sends footage to Gemini for analysis
 - Returns a structured report with timestamps, events, confidence, and coaching notes
 - Focuses on goalkeeper decision-making, positioning, communication, footwork, shot-stopping, distribution, crosses, breakaways, and game management
+- Can export a parent/player friendly HTML report that hides coach-only notes and raw analysis text
+- The report URL now opens the sanitized HTML report by default, with `?format=json` available for the raw payload when needed
 
 ## Setup
 
@@ -39,6 +41,12 @@ Start the local dashboard:
 npm start
 ```
 
+Run quality checks:
+
+```bash
+npm run verify
+```
+
 Analyze a local video:
 
 ```bash
@@ -61,6 +69,8 @@ npm run sample
 - `ATHLETES_DIR` - optional, defaults to `athletes`
 - `MAX_INLINE_BYTES` - optional, maximum file size to inline before the app switches to the Gemini Files API
 - `MAX_UPLOAD_BYTES` - optional, upload cap for incoming video files, defaults to `250000000` (~238 MB)
+- `ANALYZE_RATE_LIMIT_WINDOW_MS` - optional, per-client analyze window in milliseconds, defaults to `600000` (10 minutes)
+- `ANALYZE_RATE_LIMIT_MAX_REQUESTS` - optional, per-client analyze requests allowed per window, defaults to `20`
 - `DATABASE_URL` - optional, Postgres connection string for cloud persistence
 - `DATABASE_SSL_ENABLED` - optional, defaults to `true`
 - `DATABASE_SSL_REJECT_UNAUTHORIZED` - optional, defaults to `false` for local/dev RDS connectivity
@@ -85,6 +95,17 @@ keep `DATABASE_SSL_ENABLED=true` and set `DATABASE_SSL_REJECT_UNAUTHORIZED=false
 - JSON writes for athlete profiles and reports are atomic (temp file + rename).
 - Uploaded videos are validated and size-limited before analysis begins.
 - Health endpoint is available at `GET /healthz`.
+- Analyze endpoint has basic in-memory per-client rate limiting to reduce accidental abuse.
+
+## Front-end module structure
+
+The UI is split into composable modules under `public/modules/`:
+
+- `analysis-ui.js` - analysis results rendering orchestration
+- `athlete-history.js` - athlete profile/history rendering
+- `dashboard-viz.js` - dashboard infographic and KPI visualization logic
+- `parent-report.js` - sanitized parent/player export generation
+This structure keeps `public/app.js` as orchestration glue rather than a single monolith.
 
 ## Notes
 

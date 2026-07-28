@@ -44,6 +44,10 @@ Return only valid JSON with this shape:
 Rules:
 - Focus on practical coaching feedback a real coach would give.
 - Use short, clear language.
+- Keep the tone supportive, confident, and family-friendly.
+- Frame corrections as growth opportunities, not criticism.
+- Avoid harsh or shaming language.
+- Write so the report can later be shared with parents or players in a positive way.
 - If a timestamp is approximate, say so in the timestamp string.
 - Keep the output valid JSON only. No markdown, no code fences, no extra commentary.`;
 }

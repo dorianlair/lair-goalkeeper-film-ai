@@ -159,11 +159,18 @@
               <h3>Analysis output</h3>
               <p class="muted">This is the coach-facing result Gemini returns after reviewing the clip.</p>
             </div>
-            <div class="status-group">
-              <div id="run-state" class="status-chip status-idle">Waiting for upload</div>
-              <p id="analysis-timer" class="muted analysis-timer">Elapsed: 00:00</p>
+            <div class="results-actions">
+              <button type="button" id="parent-export-btn" class="secondary-action" disabled>Export parent report</button>
+              <div class="status-group">
+                <div id="run-state" class="status-chip status-idle">Waiting for upload</div>
+                <p id="analysis-timer" class="muted analysis-timer">Elapsed: 00:00</p>
+              </div>
             </div>
           </div>
+
+          <p class="results-note muted">
+            Parent report export removes coach-only notes, raw analysis text, and confidence values, then rewrites the summary in a family-friendly format.
+          </p>
 
           <div id="result-metrics" class="metrics hidden"></div>
 

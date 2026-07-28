@@ -8,6 +8,11 @@ const projectRoot = path.resolve(__dirname, '..');
 
 dotenv.config({ path: path.join(projectRoot, '.env') });
 
+function parsePositiveInt(value, fallback) {
+  const num = Number.parseInt(String(value ?? ''), 10);
+  return Number.isFinite(num) && num > 0 ? num : fallback;
+}
+
 export function getConfig() {
   const apiKey = process.env.GEMINI_API_KEY?.trim();
 
@@ -40,6 +45,8 @@ export function getConfig() {
     athletesDir: process.env.ATHLETES_DIR?.trim() || 'athletes',
     maxInlineBytes: Number(process.env.MAX_INLINE_BYTES || 20000000),
     maxUploadBytes: Number(process.env.MAX_UPLOAD_BYTES || 250000000),
+    analyzeRateLimitWindowMs: parsePositiveInt(process.env.ANALYZE_RATE_LIMIT_WINDOW_MS, 10 * 60 * 1000),
+    analyzeRateLimitMaxRequests: parsePositiveInt(process.env.ANALYZE_RATE_LIMIT_MAX_REQUESTS, 20),
     databaseUrl,
     databaseSslEnabled,
     databaseSslRejectUnauthorized,

@@ -8,7 +8,9 @@
     "start": "node src/server.js",
     "cli": "node src/cli.js",
     "analyze": "node src/cli.js analyze",
+    "test": "node --test",
     "check": "node --check src/cli.js && node --check src/config.js && node --check src/cloudData.js && node --check src/gemini.js && node --check src/prompts.js && node --check src/report.js && node --check src/server.js",
+    "verify": "npm run check && npm run test",
     "sample": "node src/cli.js sample-prompt"
   },
   "dependencies": {

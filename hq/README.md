@@ -14,3 +14,9 @@ This folder is your personal operating system.
 - Raw data is preserved in `archive/`.
 - Structured truth lives in the domain files.
 - If there is a conflict, update structured files and note the decision.
+
+## Engineering operating docs
+
+- `app-spec.md` - product and implementation source of truth
+- `ai-engineering-guardrails.md` - AI-assisted engineering rules for scalability and maintainability
+- `spec-parity-checklist.md` - release checklist to prevent spec/code drift
