@@ -23,17 +23,14 @@ export function getConfig() {
   const databaseUrl = process.env.DATABASE_URL?.trim() || '';
   const databaseSslEnabled = ['true', '1', 'yes'].includes(String(process.env.DATABASE_SSL_ENABLED || 'true').toLowerCase());
   const databaseSslRejectUnauthorized = ['true', '1', 'yes'].includes(String(process.env.DATABASE_SSL_REJECT_UNAUTHORIZED || 'false').toLowerCase());
-  const s3Bucket = process.env.S3_BUCKET?.trim() || '';
-  const s3Region = process.env.S3_REGION?.trim() || process.env.AWS_REGION?.trim() || 'us-east-1';
-  const s3Endpoint = process.env.S3_ENDPOINT?.trim() || '';
-  const s3AccessKeyId = process.env.AWS_ACCESS_KEY_ID?.trim() || '';
-  const s3SecretAccessKey = process.env.AWS_SECRET_ACCESS_KEY?.trim() || '';
-  const s3ForcePathStyle = ['true', '1', 'yes'].includes(String(process.env.S3_FORCE_PATH_STYLE || '').toLowerCase());
+  const supabaseUrl = process.env.SUPABASE_URL?.trim() || '';
+  const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY?.trim() || '';
+  const supabaseBucket = process.env.SUPABASE_BUCKET?.trim() || '';
 
-  const useCloudPersistence = Boolean(databaseUrl && s3Bucket);
+  const useCloudPersistence = Boolean(databaseUrl && supabaseUrl && supabaseServiceRoleKey && supabaseBucket);
 
-  if (!useCloudPersistence && (databaseUrl || s3Bucket)) {
-    throw new Error('To enable cloud persistence, set both DATABASE_URL and S3_BUCKET.');
+  if (!useCloudPersistence && (databaseUrl || supabaseUrl || supabaseServiceRoleKey || supabaseBucket)) {
+    throw new Error('To enable Supabase persistence, set DATABASE_URL, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, and SUPABASE_BUCKET.');
   }
 
   return {
@@ -51,11 +48,8 @@ export function getConfig() {
     databaseSslEnabled,
     databaseSslRejectUnauthorized,
     useCloudPersistence,
-    s3Bucket,
-    s3Region,
-    s3Endpoint,
-    s3AccessKeyId,
-    s3SecretAccessKey,
-    s3ForcePathStyle,
+    supabaseUrl,
+    supabaseServiceRoleKey,
+    supabaseBucket,
   };
 }

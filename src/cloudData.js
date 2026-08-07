@@ -3,7 +3,7 @@ import path from 'node:path';
 import { readFile } from 'node:fs/promises';
 import { buildReviewUpdateAssignments } from './reviewUpdate.js';
 import { Pool } from 'pg';
-import { S3Client, PutObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3';
+import { createClient } from '@supabase/supabase-js';
 
 function normalizeText(value) {
   return String(value || '').trim();
@@ -123,6 +123,29 @@ function mapAthleteRow(row) {
   };
 }
 
+function videoContentTypeFromFileName(fileName) {
+  const extension = path.extname(fileName).toLowerCase();
+
+  switch (extension) {
+    case '.mp4':
+      return 'video/mp4';
+    case '.mov':
+      return 'video/quicktime';
+    case '.avi':
+      return 'video/x-msvideo';
+    case '.webm':
+      return 'video/webm';
+    case '.mkv':
+      return 'video/x-matroska';
+    default:
+      return 'video/mp4';
+  }
+}
+
+async function blobToBuffer(blob) {
+  return Buffer.from(await blob.arrayBuffer());
+}
+
 export async function createCloudDataLayer(config) {
   let normalizedDatabaseUrl = config.databaseUrl;
   try {
@@ -143,16 +166,12 @@ export async function createCloudDataLayer(config) {
       ? { rejectUnauthorized: config.databaseSslRejectUnauthorized }
       : undefined,
   });
-  const s3 = new S3Client({
-    region: config.s3Region,
-    endpoint: config.s3Endpoint || undefined,
-    forcePathStyle: config.s3ForcePathStyle,
-    credentials: config.s3AccessKeyId && config.s3SecretAccessKey
-      ? {
-        accessKeyId: config.s3AccessKeyId,
-        secretAccessKey: config.s3SecretAccessKey,
-      }
-      : undefined,
+  const supabase = createClient(config.supabaseUrl, config.supabaseServiceRoleKey, {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false,
+      detectSessionInUrl: false,
+    },
   });
 
   await pool.query(`
@@ -370,12 +389,16 @@ export async function createCloudDataLayer(config) {
     const videoKey = `athletes/${athleteId}/media/${storedFileName}`;
     const fileBuffer = await readFile(uploadFile.tempPath);
 
-    await s3.send(new PutObjectCommand({
-      Bucket: config.s3Bucket,
-      Key: videoKey,
-      Body: fileBuffer,
-      ContentType: uploadFile.mimeType || 'video/mp4',
-    }));
+    const { error: uploadError } = await supabase.storage
+      .from(config.supabaseBucket)
+      .upload(videoKey, fileBuffer, {
+        contentType: uploadFile.mimeType || videoContentTypeFromFileName(storedFileName),
+        upsert: true,
+      });
+
+    if (uploadError) {
+      throw new Error(`Failed to upload review video to Supabase Storage: ${uploadError.message}`);
+    }
 
     const now = new Date().toISOString();
     await pool.query(
@@ -441,12 +464,16 @@ export async function createCloudDataLayer(config) {
     const reportFileName = `${reviewId}.json`;
     const reportKey = `athletes/${athleteId}/reports/${reportFileName}`;
 
-    await s3.send(new PutObjectCommand({
-      Bucket: config.s3Bucket,
-      Key: reportKey,
-      Body: JSON.stringify(report, null, 2),
-      ContentType: 'application/json',
-    }));
+    const { error: uploadError } = await supabase.storage
+      .from(config.supabaseBucket)
+      .upload(reportKey, Buffer.from(JSON.stringify(report, null, 2)), {
+        contentType: 'application/json',
+        upsert: true,
+      });
+
+    if (uploadError) {
+      throw new Error(`Failed to upload review report to Supabase Storage: ${uploadError.message}`);
+    }
 
     await pool.query(
       'UPDATE reviews SET report_key = $1 WHERE id = $2 AND athlete_id = $3',
@@ -499,14 +526,17 @@ export async function createCloudDataLayer(config) {
       throw new Error(`Review ${assetType} is not available.`);
     }
 
-    const result = await s3.send(new GetObjectCommand({
-      Bucket: config.s3Bucket,
-      Key: key,
-    }));
+    const { data, error } = await supabase.storage
+      .from(config.supabaseBucket)
+      .download(key);
+
+    if (error || !data) {
+      throw new Error(`Failed to load review ${assetType} from Supabase Storage.`);
+    }
 
     return {
-      body: result.Body,
-      contentType: result.ContentType || (assetType === 'video' ? 'video/mp4' : 'application/json'),
+      body: await blobToBuffer(data),
+      contentType: data.type || (assetType === 'video' ? videoContentTypeFromFileName(review.storedFileName) : 'application/json'),
     };
   }
 

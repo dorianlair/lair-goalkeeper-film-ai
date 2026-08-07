@@ -107,7 +107,7 @@ AC references: AC-11, AC-12
 
 S-7
 Capability: Optional cloud persistence
-Description: Postgres + S3 mode parity with local mode
+Description: Postgres + Supabase Storage mode parity with local mode
 AC references: AC-13
 
 S-8
@@ -154,7 +154,7 @@ When addressed: Future expansion
 
 Scope dependencies:
 - Gemini API key is required for analysis path. [Validated]
-- Cloud mode requires both DATABASE_URL and S3_BUCKET. [Validated]
+- Cloud mode requires DATABASE_URL, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, and SUPABASE_BUCKET. [Validated]
 
 --------------------------------------------------
 3) ACCEPTANCE CRITERIA
@@ -329,7 +329,7 @@ Owner: Dorian
 Blocker: No (unless cloud mode required)
 
 DEP-3
-Dependency: S3 bucket (optional)
+Dependency: Supabase Storage bucket (optional)
 Type: Infra
 Status: Optional
 Owner: Dorian

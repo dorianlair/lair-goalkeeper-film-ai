@@ -448,7 +448,7 @@ async function start() {
 
   if (config.useCloudPersistence) {
     cloudDataLayer = await createCloudDataLayer(config);
-    console.log(`Cloud persistence enabled (Postgres + S3 bucket: ${config.s3Bucket}).`);
+    console.log(`Supabase persistence enabled (Postgres + Supabase Storage bucket: ${config.supabaseBucket}).`);
   } else {
     await mkdir(athletesDir, { recursive: true });
     console.log('Local persistence enabled (filesystem).');

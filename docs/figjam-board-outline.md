@@ -23,7 +23,7 @@
 6. Data & Storage Options
    - Local files
    - Postgres
-   - S3 bucket
+   - Supabase Storage bucket
 
 ## Brand colors
 
